@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA DE GESTÃO DE LOCAÇÕES</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #000000;
+            --bg-body: #ffffff; 
+            --text-main: #000000;
+            --border: 2px solid #000000;
+            --border-thin: 1.5px solid #000000;
+            --radius: 0px; 
+            --cor-pago: #10b981;
+            --cor-pendente: #f59e0b;
+            --cor-atraso: #ef4444;
+        }
+
+        body { 
+            background-color: var(--bg-body); 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.02em;
+            padding-bottom: 60px;
+        }
+
+        .app-header {
+            border-bottom: var(--border);
+            padding: 1rem 0;
+            margin-bottom: 1.5rem;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1000;
+        }
+
+        .user-id-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background: #000;
+            color: #fff;
+            padding: 2px 10px;
+            display: inline-block;
+        }
+
+        .card { border: var(--border-thin); margin-bottom: 2rem; background: #fff; }
+        .card-header-industrial { border-bottom: var(--border-thin); padding: 0.8rem 1.2rem; background: #fafafa; }
+        .status-tag { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; padding: 2px 8px; border: 2px solid currentColor; display: inline-block; background: white; }
+        .vigencia-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: #000; border: 1.5px solid #000; padding: 2px 8px; display: inline-block; }
+
+        .btn { font-weight: 800; text-transform: uppercase; font-size: 0.75rem; padding: 0.6rem 1.2rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background: #000; border: var(--border-thin); color: #fff; }
+        .btn-outline { border: var(--border-thin); background: transparent; color: #000; }
+        .btn-danger { background: #fee2e2; border: 1.5px solid #ef4444; color: #ef4444; }
+
+        .table-auditoria thead th { background: #000; color: #fff; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; padding: 0.7rem; text-align: left; }
+        .table-auditoria tbody td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #ddd; font-size: 0.85rem; font-weight: 600; }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .modal-content { border: var(--border); background: #fff; max-width: 750px; width: 100%; max-height: 95vh; overflow-y: auto; }
+
+        .form-label { font-weight: 800; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.3rem; display: block; color: #000; }
+        .form-control, .form-select { border: var(--border-thin); padding: 0.6rem; font-size: 0.9rem; font-weight: 600; width: 100%; border-radius: 0; }
+
+        .type-selector { display: flex; border: var(--border-thin); margin: 0 1.5rem; overflow: hidden; }
+        .type-option { flex: 1; padding: 1rem; text-align: center; font-weight: 900; font-size: 0.75rem; cursor: pointer; background: #f8fafc; transition: all 0.2s; }
+        .type-option:first-child { border-right: var(--border-thin); }
+        .type-option.active { background: #000 !important; color: #fff !important; }
+
+        #loadingOverlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        @media print {
+            .no-print { display: none !important; }
+            .card { page-break-inside: avoid; border: 2px solid black !important; }
+            .stat-box { border: 2px solid black !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loadingOverlay">
+        <h1 class="font-black text-2xl uppercase italic tracking-tighter">Sincronizando Nuvem...</h1>
+        <p class="text-xs font-bold mt-2">Aguardando Firebase</p>
+    </div>
+
+    <header class="app-header no-print">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <h1 class="text-3xl font-black uppercase tracking-tighter">Gestão de Locações</h1>
+            <div class="flex gap-2">
+                <button id="btnExport" class="btn btn-outline">Backup</button>
+                <label class="btn btn-outline cursor-pointer">
+                    Importar <input type="file" id="importInput" class="hidden" accept=".json">
+                </label>
+                <button id="btnNewUnit" class="btn btn-primary">Nova Unidade</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4">
+        <div id="dashboardSection" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
+            <div class="stat-box p-4 border-2 border-black bg-white">
+                <p class="text-[0.6rem] font-black text-slate-500 uppercase">Receita Liquidada</p>
+                <h3 id="statTotalRecebido" class="text-lg font-black mt-1 text-emerald-600">R$ 0,00</h3>
+            </div>
+            <div class="stat-box p-4 border-2 border-black bg-white">
+                <p class="text-[0.6rem] font-black text-amber-600 uppercase">Total a Vencer</p>
+                <h3 id="statTotalAVencer" class="text-lg font-black mt-1 text-amber-600">R$ 0,00</h3>
+            </div>
+            <div class="stat-box p-4 border-2 border-black bg-white">
+                <p class="text-[0.6rem] font-black text-rose-600 uppercase">Dívida (Vencido)</p>
+                <h3 id="statTotalAtraso" class="text-lg font-black mt-1 text-rose-600">R$ 0,00</h3>
+            </div>
+            <div class="stat-box p-4 border-2 border-black bg-white">
+                <p class="text-[0.6rem] font-black text-slate-500 uppercase">Inadimplência</p>
+                <h3 id="statTaxaInadimplencia" class="text-lg font-black mt-1">0%</h3>
+            </div>
+            <div class="stat-box p-4 border-2 border-black bg-white flex flex-col justify-center no-print">
+                <button onclick="window.print()" class="btn btn-outline w-full py-1 text-[0.6rem]">Relatório PDF</button>
+            </div>
+        </div>
+        <div id="unitsGrid"></div>
+    </main>
+
+    <div id="unitModal" class="modal-overlay no-print">
+        <div class="modal-content">
+            <div class="p-4 border-b-2 border-black bg-black text-white flex justify-between items-center">
+                <h2 class="font-black text-xs uppercase tracking-widest text-white">Configuração da Unidade</h2>
+                <button onclick="closeModal('unitModal')"><i class="fas fa-times text-white"></i></button>
+            </div>
+            <form id="unitForm" class="p-6 space-y-4">
+                <input type="hidden" id="unitId">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="form-label">Identificação da Unidade</label>
+                        <input type="text" name="name" required class="form-control" placeholder="EX: APARTAMENTO 101">
+                    </div>
+                    <div>
+                        <label class="form-label">Nome do Locatário</label>
+                        <input type="text" name="tenant" class="form-control" placeholder="NOME COMPLETO">
+                    </div>
+                    <div>
+                        <label class="form-label">Status da Ocupação</label>
+                        <select name="occupancy" class="form-select">
+                            <option value="Ocupado">Ocupado</option>
+                            <option value="Livre">Livre</option>
+                        </select>
+                    </div>
+                    <div><label class="form-label">Início da Vigência</label><input type="date" name="start" class="form-control"></div>
+                    <div><label class="form-label">Término da Vigência</label><input type="date" name="end" class="form-control"></div>
+                </div>
+                <div class="flex gap-2 pt-4 border-t">
+                    <button type="button" id="btnDeleteUnit" class="btn btn-danger hidden">Remover</button>
+                    <div class="flex-1"></div>
+                    <button type="button" onclick="closeModal('unitModal')" class="btn btn-outline">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Unidade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="entryModal" class="modal-overlay no-print">
+        <div class="modal-content">
+            <div class="p-4 border-b-2 border-black bg-black text-white flex justify-between items-center">
+                <h2 class="font-black text-xs uppercase tracking-widest text-white">Lançamento Financeiro</h2>
+                <button onclick="closeModal('entryModal')"><i class="fas fa-times text-white"></i></button>
+            </div>
+            <div class="type-selector mt-4">
+                <div id="optAluguel" class="type-option active">OPÇÃO A: ALUGUEL</div>
+                <div id="optDespesa" class="type-option">OPÇÃO B: DESPESAS</div>
+            </div>
+            <form id="entryForm" class="p-6 space-y-6">
+                <input type="hidden" id="editingEntryId"><input type="hidden" id="entryUnitId"><input type="hidden" id="entryType" name="entryType" value="aluguel">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="form-label">Data de Vencimento</label><input type="date" name="dueDate" required class="form-control"></div>
+                    <div>
+                        <label class="form-label">Situação</label>
+                        <select name="status" class="form-select font-black uppercase">
+                            <option value="Pendente">Pendente</option>
+                            <option value="Pago">Pago</option>
+                            <option value="Vencido">Vencido</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="sectionAluguel" class="space-y-4">
+                    <div><label class="form-label">Valor Aluguel (R$)</label><input type="number" step="0.01" name="rentValue" class="form-control text-xl font-black" id="rentInput"></div>
+                </div>
+                <div id="sectionDespesa" class="hidden space-y-4">
+                    <div class="p-4 border-2 border-black bg-slate-50 space-y-4">
+                        <input type="text" name="expenseType" class="form-control" placeholder="TÍTULO DA DESPESA">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div><label class="form-label">Energia</label><input type="number" step="0.01" name="energyValue" class="form-control calc-trigger"></div>
+                            <div><label class="form-label">Água</label><input type="number" step="0.01" name="waterFee" class="form-control calc-trigger"></div>
+                            <div><label class="form-label">Outros</label><input type="number" step="0.01" name="otherVal" class="form-control calc-trigger"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 border-2 border-black bg-slate-50">
+                    <label class="form-label">Total (R$)</label>
+                    <input type="number" step="0.01" name="totalValue" id="inputTotalValue" required class="form-control font-black text-2xl border-black">
+                </div>
+                <div class="flex gap-2"><button type="button" onclick="closeModal('entryModal')" class="btn btn-outline flex-1">Cancelar</button><button type="submit" class="btn btn-primary flex-1">Salvar</button></div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, remove, update, set } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBwtirBvBeI1wd4T-g68QlN8YK2dvXM_us",
+            authDomain: "sistema-de-gestao-de-locacoes.firebaseapp.com",
+            databaseURL: "https://sistema-de-gestao-de-locacoes-default-rtdb.firebaseio.com/",
+            projectId: "sistema-de-gestao-de-locacoes",
+            storageBucket: "sistema-de-gestao-de-locacoes.firebasestorage.app",
+            messagingSenderId: "965773121631",
+            appId: "1:965773121631:web:e7efc1e5fecbdd1b26a3ea"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        let state = { units: [], entries: [] };
+
+        const formatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+        const formatC = (v) => formatter.format(v || 0);
+        const formatDate = (d) => { if(!d) return '---'; const [y,m,r] = d.split('-'); return `${r}/${m}/${y}`; };
+        const getRef = (dateStr) => { if(!dateStr) return '---'; const [y, m] = dateStr.split('-'); const months = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]; return `${months[parseInt(m)-1]}/${y}`; };
+
+        // FIREBASE SYNC [cite: 2026-03-02]
+        onValue(ref(db, 'gestao_patrimonial/'), (snap) => {
+            const data = snap.val();
+            state.units = data?.units ? Object.entries(data.units).map(([id, v]) => ({...v, id})) : [];
+            state.entries = data?.entries ? Object.entries(data.entries).map(([id, v]) => ({...v, id})) : [];
+            renderApp();
+            document.getElementById('loadingOverlay').style.display = 'none';
+        });
+
+        // UI HELPERS
+        window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+        document.getElementById('btnNewUnit').onclick = () => {
+            document.getElementById('unitForm').reset();
+            document.getElementById('unitId').value = '';
+            document.getElementById('btnDeleteUnit').classList.add('hidden');
+            document.getElementById('unitModal').style.display = 'flex';
+        };
+
+        document.getElementById('unitForm').onsubmit = (e) => {
+            e.preventDefault();
+            const d = Object.fromEntries(new FormData(e.target));
+            const id = document.getElementById('unitId').value;
+            id ? update(ref(db, `gestao_patrimonial/units/${id}`), d) : push(ref(db, 'gestao_patrimonial/units'), d);
+            closeModal('unitModal');
+        };
+
+        document.getElementById('btnDeleteUnit').onclick = () => {
+            if(confirm("Apagar unidade?")) {
+                const id = document.getElementById('unitId').value;
+                remove(ref(db, `gestao_patrimonial/units/${id}`));
+                state.entries.filter(e => e.unitId === id).forEach(e => remove(ref(db, `gestao_patrimonial/entries/${e.id}`)));
+                closeModal('unitModal');
+            }
+        };
+
+        document.getElementById('entryForm').onsubmit = (e) => {
+            e.preventDefault();
+            const d = Object.fromEntries(new FormData(e.target));
+            const edId = document.getElementById('editingEntryId').value;
+            const uId = document.getElementById('entryUnitId').value;
+            const data = { ...d, totalValue: parseFloat(d.totalValue||0), unitId: uId };
+            edId ? update(ref(db, `gestao_patrimonial/entries/${edId}`), data) : push(ref(db, 'gestao_patrimonial/entries'), data);
+            closeModal('entryModal');
+        };
+
+        // EXPORT & IMPORT [cite: 2026-03-02]
+        document.getElementById('btnExport').onclick = () => {
+            const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_locacoes.json`; a.click();
+        };
+
+        document.getElementById('importInput').onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const imported = JSON.parse(ev.target.result);
+                if(confirm("Importar dados para a nuvem?")) {
+                    const units = {}; imported.units.forEach(u => { const {id, ...v} = u; units[id || Date.now()] = v; });
+                    const entries = {}; imported.entries.forEach(e => { const {id, ...v} = e; entries[id || Date.now()] = v; });
+                    set(ref(db, 'gestao_patrimonial/'), { units, entries });
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        function renderApp() {
+            const grid = document.getElementById('unitsGrid');
+            let gRec = 0, gAVen = 0, gAtr = 0, tL = 0, lA = 0;
+
+            grid.innerHTML = state.units.map(unit => {
+                const entries = state.entries.filter(e => e.unitId === unit.id).sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+                let uRec = 0, uAVen = 0, uAtr = 0;
+                entries.forEach(e => {
+                    tL++;
+                    if(e.status==='Pago') { gRec += e.totalValue; uRec += e.totalValue; }
+                    else if(e.status==='Vencido') { gAtr += e.totalValue; uAtr += e.totalValue; lA++; }
+                    else { gAVen += e.totalValue; uAVen += e.totalValue; }
+                });
+
+                return `
+                    <div class="card">
+                        <div class="card-header-industrial flex justify-between items-center">
+                            <div>
+                                <span class="user-id-badge">${unit.name}</span>
+                                <h2 class="text-xl font-black uppercase">${unit.tenant || 'DISPONÍVEL'}</h2>
+                                <span class="vigencia-label">VIGÊNCIA: ${formatDate(unit.start)} - ${formatDate(unit.end)}</span>
+                            </div>
+                            <div class="no-print flex gap-2">
+                                <button data-action="new-entry" data-unit="${unit.id}" class="btn btn-primary">Lançar</button>
+                                <button data-action="edit-unit" data-unit="${unit.id}" class="btn btn-outline">⚙️</button>
+                            </div>
+                        </div>
+                        <table class="table-auditoria w-full">
+                            <thead><tr><th>Status</th><th>Ref</th><th>Valor</th><th class="no-print"></th></tr></thead>
+                            <tbody>
+                                ${entries.map(e => `
+                                    <tr>
+                                        <td><span class="status-tag" style="color: ${e.status==='Pago'?'#10b981':(e.status==='Vencido'?'#ef4444':'#f59e0b')}">${e.status}</span></td>
+                                        <td>${getRef(e.dueDate)}</td>
+                                        <td class="text-right font-black">${formatC(e.totalValue)}</td>
+                                        <td class="no-print text-center">
+                                            <button data-action="delete-entry" data-id="${e.id}" class="text-rose-600"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`;
+            }).join('');
+
+            document.getElementById('statTotalRecebido').innerText = formatC(gRec);
+            document.getElementById('statTotalAVencer').innerText = formatC(gAVen);
+            document.getElementById('statTotalAtraso').innerText = formatC(gAtr);
+            document.getElementById('statTaxaInadimplencia').innerText = `${tL > 0 ? ((lA / tL) * 100).toFixed(1) : 0}%`;
+            attachEvents();
+        }
+
+        function attachEvents() {
+            document.querySelectorAll('[data-action]').forEach(btn => {
+                btn.onclick = () => {
+                    const action = btn.getAttribute('data-action');
+                    const uId = btn.getAttribute('data-unit');
+                    const id = btn.getAttribute('data-id');
+
+                    if(action === 'new-entry') {
+                        document.getElementById('entryForm').reset();
+                        document.getElementById('entryUnitId').value = uId;
+                        document.getElementById('entryModal').style.display = 'flex';
+                    }
+                    if(action === 'edit-unit') {
+                        const u = state.units.find(x => x.id === uId);
+                        document.getElementById('unitId').value = uId;
+                        document.querySelector('[name="name"]').value = u.name;
+                        document.querySelector('[name="tenant"]').value = u.tenant;
+                        document.getElementById('btnDeleteUnit').classList.remove('hidden');
+                        document.getElementById('unitModal').style.display = 'flex';
+                    }
+                    if(action === 'delete-entry' && confirm("Remover?")) remove(ref(db, `gestao_patrimonial/entries/${id}`));
+                };
+            });
+        }
+
+        // ENTRY TYPE LOGIC
+        const setType = (t) => {
+            document.getElementById('entryType').value = t;
+            document.getElementById('optAluguel').className = `type-option ${t==='aluguel'?'active':''}`;
+            document.getElementById('optDespesa').className = `type-option ${t==='despesa'?'active':''}`;
+            document.getElementById('sectionAluguel').classList.toggle('hidden', t!=='aluguel');
+            document.getElementById('sectionDespesa').classList.toggle('hidden', t!=='despesa');
+        };
+        document.getElementById('optAluguel').onclick = () => setType('aluguel');
+        document.getElementById('optDespesa').onclick = () => setType('despesa');
+        document.getElementById('rentInput').oninput = (e) => document.getElementById('inputTotalValue').value = e.target.value;
+        document.querySelectorAll('.calc-trigger').forEach(el => el.oninput = () => {
+            const f = document.getElementById('entryForm');
+            document.getElementById('inputTotalValue').value = (parseFloat(f.energyValue.value||0) + parseFloat(f.waterFee.value||0) + parseFloat(f.otherVal.value||0)).toFixed(2);
+        });
+    </script>
+</body>
+</html>
