@@ -13,7 +13,6 @@
             --text-main: #000000;
             --border: 2px solid #000000;
             --border-thin: 1.5px solid #000000;
-            --radius: 0px; 
             --cor-pago: #10b981;
             --cor-pendente: #f59e0b;
             --cor-atraso: #ef4444;
@@ -23,31 +22,12 @@
             background-color: var(--bg-body); 
             font-family: 'Inter', -apple-system, sans-serif; 
             color: var(--text-main);
-            -webkit-font-smoothing: antialiased;
             letter-spacing: -0.02em;
             padding-bottom: 60px;
         }
 
-        .app-header {
-            border-bottom: var(--border);
-            padding: 1rem 0;
-            margin-bottom: 1.5rem;
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 1000;
-        }
-
-        .user-id-badge {
-            font-size: 0.7rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            background: #000;
-            color: #fff;
-            padding: 2px 10px;
-            display: inline-block;
-        }
-
+        .app-header { border-bottom: var(--border); padding: 1rem 0; margin-bottom: 1.5rem; position: sticky; top: 0; background: white; z-index: 1000; }
+        .user-id-badge { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; background: #000; color: #fff; padding: 2px 10px; display: inline-block; }
         .card { border: var(--border-thin); margin-bottom: 2rem; background: #fff; }
         .card-header-industrial { border-bottom: var(--border-thin); padding: 0.8rem 1.2rem; background: #fafafa; }
         .status-tag { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; padding: 2px 8px; border: 2px solid currentColor; display: inline-block; background: white; }
@@ -63,22 +43,16 @@
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; display: none; align-items: center; justify-content: center; }
         .modal-content { border: var(--border); background: #fff; max-width: 750px; width: 100%; max-height: 95vh; overflow-y: auto; }
-
         .form-label { font-weight: 800; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.3rem; display: block; color: #000; }
         .form-control, .form-select { border: var(--border-thin); padding: 0.6rem; font-size: 0.9rem; font-weight: 600; width: 100%; border-radius: 0; }
 
         .type-selector { display: flex; border: var(--border-thin); margin: 0 1.5rem; overflow: hidden; }
         .type-option { flex: 1; padding: 1rem; text-align: center; font-weight: 900; font-size: 0.75rem; cursor: pointer; background: #f8fafc; transition: all 0.2s; }
-        .type-option:first-child { border-right: var(--border-thin); }
         .type-option.active { background: #000 !important; color: #fff !important; }
 
         #loadingOverlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
-        @media print {
-            .no-print { display: none !important; }
-            .card { page-break-inside: avoid; border: 2px solid black !important; }
-            .stat-box { border: 2px solid black !important; }
-        }
+        @media print { .no-print { display: none !important; } .card { page-break-inside: avoid; } }
     </style>
 </head>
 <body>
@@ -90,7 +64,7 @@
 
     <header class="app-header no-print">
         <div class="container mx-auto px-4 flex justify-between items-center">
-            <h1 class="text-3xl font-black uppercase tracking-tighter">Gestão de Locações</h1>
+            <h1 class="text-3xl font-black uppercase tracking-tighter text-black">Gestão de Locações</h1>
             <div class="flex gap-2">
                 <button id="btnExport" class="btn btn-outline">Backup</button>
                 <label class="btn btn-outline cursor-pointer">
@@ -137,7 +111,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2">
                         <label class="form-label">Identificação da Unidade</label>
-                        <input type="text" name="name" required class="form-control" placeholder="EX: APARTAMENTO 101">
+                        <input type="text" name="name" required class="form-control" placeholder="EX: QUITINETE 01">
                     </div>
                     <div>
                         <label class="form-label">Nome do Locatário</label>
@@ -178,32 +152,51 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="form-label">Data de Vencimento</label><input type="date" name="dueDate" required class="form-control"></div>
                     <div>
-                        <label class="form-label">Situação</label>
+                        <label class="form-label">Situação do Pagamento</label>
                         <select name="status" class="form-select font-black uppercase">
-                            <option value="Pendente">Pendente</option>
-                            <option value="Pago">Pago</option>
-                            <option value="Vencido">Vencido</option>
+                            <option value="Pendente">A Vencer (Pendente)</option>
+                            <option value="Pago">Pago (Liquidado)</option>
+                            <option value="Vencido">Em Atraso (Vencido)</option>
                         </select>
                     </div>
                 </div>
+
                 <div id="sectionAluguel" class="space-y-4">
-                    <div><label class="form-label">Valor Aluguel (R$)</label><input type="number" step="0.01" name="rentValue" class="form-control text-xl font-black" id="rentInput"></div>
+                    <div><label class="form-label">Valor do Aluguel Bruto (R$)</label><input type="number" step="0.01" name="rentValue" class="form-control text-xl font-black" id="rentInput"></div>
                 </div>
+
                 <div id="sectionDespesa" class="hidden space-y-4">
                     <div class="p-4 border-2 border-black bg-slate-50 space-y-4">
                         <input type="text" name="expenseType" class="form-control" placeholder="TÍTULO DA DESPESA">
-                        <div class="grid grid-cols-3 gap-3">
-                            <div><label class="form-label">Energia</label><input type="number" step="0.01" name="energyValue" class="form-control calc-trigger"></div>
-                            <div><label class="form-label">Água</label><input type="number" step="0.01" name="waterFee" class="form-control calc-trigger"></div>
-                            <div><label class="form-label">Outros</label><input type="number" step="0.01" name="otherVal" class="form-control calc-trigger"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="form-label">Leitura Anterior</label><input type="number" step="0.01" name="readPrev" class="form-control calc-trigger"></div>
+                            <div><label class="form-label">Leitura Atual</label><input type="number" step="0.01" name="readNow" class="form-control calc-trigger"></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 border-t border-black pt-4">
+                            <div><label class="form-label">Valor Energia</label><input type="number" step="0.01" name="energyValue" class="form-control calc-trigger"></div>
+                            <div><label class="form-label">Taxa de Água</label><input type="number" step="0.01" name="waterFee" class="form-control calc-trigger"></div>
+                            <div><label class="form-label">Outras Despesas</label><input type="number" step="0.01" name="otherVal" class="form-control calc-trigger"></div>
+                        </div>
+                        <div><label class="form-label">Descrição das Outras Despesas</label><input type="text" name="otherDesc" class="form-control" placeholder="DETALHAMENTO"></div>
+                    </div>
+                </div>
+
+                <div class="p-4 border-2 border-black bg-slate-50">
+                    <label class="form-label">Valor Total do Lançamento (R$)</label>
+                    <input type="number" step="0.01" name="totalValue" id="inputTotalValue" required class="form-control font-black text-2xl border-black">
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <div><label class="form-label">Data de Recebimento</label><input type="date" name="payDate" class="form-control"></div>
+                        <div>
+                            <label class="form-label">Forma de Recebimento</label>
+                            <div class="flex gap-3 mt-1">
+                                <label class="text-[0.65rem] font-bold"><input type="radio" name="payMethod" value="Boleto"> BOLETO</label>
+                                <label class="text-[0.65rem] font-bold"><input type="radio" name="payMethod" value="PIX"> PIX</label>
+                                <label class="text-[0.65rem] font-bold"><input type="radio" name="payMethod" value="Dinheiro"> DINHEIRO</label>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="p-4 border-2 border-black bg-slate-50">
-                    <label class="form-label">Total (R$)</label>
-                    <input type="number" step="0.01" name="totalValue" id="inputTotalValue" required class="form-control font-black text-2xl border-black">
-                </div>
-                <div class="flex gap-2"><button type="button" onclick="closeModal('entryModal')" class="btn btn-outline flex-1">Cancelar</button><button type="submit" class="btn btn-primary flex-1">Salvar</button></div>
+                <div class="flex gap-2"><button type="button" onclick="closeModal('entryModal')" class="btn btn-outline flex-1">Cancelar</button><button type="submit" class="btn btn-primary flex-1">Salvar Lançamento</button></div>
             </form>
         </div>
     </div>
@@ -229,9 +222,8 @@
         const formatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
         const formatC = (v) => formatter.format(v || 0);
         const formatDate = (d) => { if(!d) return '---'; const [y,m,r] = d.split('-'); return `${r}/${m}/${y}`; };
-        const getRef = (dateStr) => { if(!dateStr) return '---'; const [y, m] = dateStr.split('-'); const months = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"]; return `${months[parseInt(m)-1]}/${y}`; };
+        const getRef = (dateStr) => { if(!dateStr) return '---'; const [y, m] = dateStr.split('-'); const months = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"]; return `${months[parseInt(m)-1]}/${y}`; };
 
-        // FIREBASE SYNC [cite: 2026-03-02]
         onValue(ref(db, 'gestao_patrimonial/'), (snap) => {
             const data = snap.val();
             state.units = data?.units ? Object.entries(data.units).map(([id, v]) => ({...v, id})) : [];
@@ -240,9 +232,29 @@
             document.getElementById('loadingOverlay').style.display = 'none';
         });
 
-        // UI HELPERS
         window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
+        // EXPORT & IMPORT [cite: 2026-03-02]
+        document.getElementById('btnExport').onclick = () => {
+            const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_locacoes.json`; a.click();
+        };
+
+        document.getElementById('importInput').onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const imported = JSON.parse(ev.target.result);
+                if(confirm("Deseja importar esses dados para a nuvem? Isso substituirá o banco atual.")) {
+                    const units = {}; imported.units.forEach(u => { const {id, ...v} = u; units[id || Date.now()] = v; });
+                    const entries = {}; imported.entries.forEach(e => { const {id, ...v} = e; entries[id || Date.now()] = v; });
+                    set(ref(db, 'gestao_patrimonial/'), { units, entries });
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        // UI ACTIONS
         document.getElementById('btnNewUnit').onclick = () => {
             document.getElementById('unitForm').reset();
             document.getElementById('unitId').value = '';
@@ -258,43 +270,24 @@
             closeModal('unitModal');
         };
 
-        document.getElementById('btnDeleteUnit').onclick = () => {
-            if(confirm("Apagar unidade?")) {
-                const id = document.getElementById('unitId').value;
-                remove(ref(db, `gestao_patrimonial/units/${id}`));
-                state.entries.filter(e => e.unitId === id).forEach(e => remove(ref(db, `gestao_patrimonial/entries/${e.id}`)));
-                closeModal('unitModal');
-            }
-        };
-
         document.getElementById('entryForm').onsubmit = (e) => {
             e.preventDefault();
             const d = Object.fromEntries(new FormData(e.target));
             const edId = document.getElementById('editingEntryId').value;
             const uId = document.getElementById('entryUnitId').value;
-            const data = { ...d, totalValue: parseFloat(d.totalValue||0), unitId: uId };
+            const data = { 
+                ...d, 
+                totalValue: parseFloat(d.totalValue||0), 
+                rentValue: parseFloat(d.rentValue||0),
+                energyValue: parseFloat(d.energyValue||0),
+                waterFee: parseFloat(d.waterFee||0),
+                otherVal: parseFloat(d.otherVal||0),
+                readPrev: parseFloat(d.readPrev||0),
+                readNow: parseFloat(d.readNow||0),
+                unitId: uId 
+            };
             edId ? update(ref(db, `gestao_patrimonial/entries/${edId}`), data) : push(ref(db, 'gestao_patrimonial/entries'), data);
             closeModal('entryModal');
-        };
-
-        // EXPORT & IMPORT [cite: 2026-03-02]
-        document.getElementById('btnExport').onclick = () => {
-            const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `backup_locacoes.json`; a.click();
-        };
-
-        document.getElementById('importInput').onchange = (e) => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const imported = JSON.parse(ev.target.result);
-                if(confirm("Importar dados para a nuvem?")) {
-                    const units = {}; imported.units.forEach(u => { const {id, ...v} = u; units[id || Date.now()] = v; });
-                    const entries = {}; imported.entries.forEach(e => { const {id, ...v} = e; entries[id || Date.now()] = v; });
-                    set(ref(db, 'gestao_patrimonial/'), { units, entries });
-                }
-            };
-            reader.readAsText(file);
         };
 
         function renderApp() {
@@ -311,34 +304,68 @@
                     else { gAVen += e.totalValue; uAVen += e.totalValue; }
                 });
 
+                const sc = uAtr > 0 ? 'var(--cor-atraso)' : (uAVen > 0 ? 'var(--cor-pendente)' : 'var(--cor-pago)');
+
                 return `
                     <div class="card">
-                        <div class="card-header-industrial flex justify-between items-center">
+                        <div class="card-header-industrial flex justify-between items-start">
                             <div>
-                                <span class="user-id-badge">${unit.name}</span>
-                                <h2 class="text-xl font-black uppercase">${unit.tenant || 'DISPONÍVEL'}</h2>
-                                <span class="vigencia-label">VIGÊNCIA: ${formatDate(unit.start)} - ${formatDate(unit.end)}</span>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="user-id-badge">${unit.name}</span>
+                                    <span class="status-tag" style="color: ${sc}; border-color: ${sc}">${uAtr > 0 ? 'DÍVIDA ATIVA' : 'SITUAÇÃO REGULAR'}</span>
+                                    <span class="vigencia-label">VIGÊNCIA: ${formatDate(unit.start)} ATÉ ${formatDate(unit.end)}</span>
+                                </div>
+                                <h2 class="text-xl font-black uppercase tracking-tighter">${unit.tenant || 'DISPONÍVEL'}</h2>
                             </div>
                             <div class="no-print flex gap-2">
-                                <button data-action="new-entry" data-unit="${unit.id}" class="btn btn-primary">Lançar</button>
+                                <button data-action="new-entry" data-unit="${unit.id}" class="btn btn-primary">Novo Lançamento</button>
                                 <button data-action="edit-unit" data-unit="${unit.id}" class="btn btn-outline">⚙️</button>
                             </div>
                         </div>
-                        <table class="table-auditoria w-full">
-                            <thead><tr><th>Status</th><th>Ref</th><th>Valor</th><th class="no-print"></th></tr></thead>
-                            <tbody>
-                                ${entries.map(e => `
+                        <div class="overflow-x-auto">
+                            <table class="table-auditoria w-full">
+                                <thead>
                                     <tr>
-                                        <td><span class="status-tag" style="color: ${e.status==='Pago'?'#10b981':(e.status==='Vencido'?'#ef4444':'#f59e0b')}">${e.status}</span></td>
-                                        <td>${getRef(e.dueDate)}</td>
-                                        <td class="text-right font-black">${formatC(e.totalValue)}</td>
-                                        <td class="no-print text-center">
-                                            <button data-action="delete-entry" data-id="${e.id}" class="text-rose-600"><i class="fas fa-trash"></i></button>
-                                        </td>
+                                        <th>STATUS</th>
+                                        <th>REFERÊNCIA</th>
+                                        <th>DETALHAMENTO</th>
+                                        <th>VENCIMENTO / RECEBIMENTO</th>
+                                        <th class="text-right">VALOR BRUTO</th>
+                                        <th class="no-print"></th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${entries.map(e => `
+                                        <tr>
+                                            <td><span class="status-tag w-full text-center" style="color: ${e.status==='Pago'?'#10b981':(e.status==='Vencido'?'#ef4444':'#f59e0b')}">${e.status==='Pago'?'LIQUIDADO':(e.status==='Vencido'?'VENCIDO':'PENDENTE')}</span></td>
+                                            <td><span class="font-black uppercase">${getRef(e.dueDate)}</span><br><span class="text-[0.6rem] text-slate-400 font-bold uppercase">${e.entryType}</span></td>
+                                            <td class="leading-tight">
+                                                ${e.entryType==='aluguel' ? '<span class="text-[0.7rem] font-bold text-slate-500 uppercase">Aluguel Mensal Contratual</span>' : `
+                                                    <div class="text-[0.7rem] font-bold text-slate-600">
+                                                        CONSUMO: ${e.readPrev} ➔ ${e.readNow} (${(e.readNow - e.readPrev).toFixed(2)} kWh) | ENERGIA: ${formatC(e.energyValue)} | ÁGUA: ${formatC(e.waterFee)}
+                                                    </div>
+                                                `}
+                                            </td>
+                                            <td>
+                                                <span class="text-[0.7rem] font-black ${e.status==='Vencido'?'text-rose-600':''}">VENC: ${formatDate(e.dueDate)}</span><br>
+                                                <span class="text-[0.65rem] text-slate-400 font-bold uppercase">PAGO: ${e.payDate ? `${formatDate(e.payDate)} (${e.payMethod})` : '---'}</span>
+                                            </td>
+                                            <td class="text-right font-black text-lg">${formatC(e.totalValue)}</td>
+                                            <td class="no-print text-center">
+                                                <button data-action="edit-entry" data-id="${e.id}" data-unit="${unit.id}" class="text-indigo-600 p-1"><i class="fas fa-pen"></i></button>
+                                                <button data-action="delete-entry" data-id="${e.id}" class="text-slate-300 hover:text-rose-600 p-1"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="p-4 bg-slate-50 border-t-2 border-black grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div><p class="text-[0.6rem] font-black text-slate-500 uppercase">Receita Liquidada</p><p class="text-lg font-black text-emerald-600">${formatC(uRec)}</p></div>
+                            <div><p class="text-[0.6rem] font-black text-slate-500 uppercase">A Vencer</p><p class="text-lg font-black text-amber-600">${formatC(uAVen)}</p></div>
+                            <div><p class="text-[0.6rem] font-black text-slate-500 uppercase">Dívida (Vencido)</p><p class="text-lg font-black text-rose-600">${formatC(uAtr)}</p></div>
+                            <div class="text-right"><p class="text-[0.6rem] font-black text-slate-500 uppercase">Saldo Pendente</p><p class="text-xl font-black text-black">${formatC(uAtr + uAVen)}</p></div>
+                        </div>
                     </div>`;
             }).join('');
 
@@ -359,22 +386,39 @@
                     if(action === 'new-entry') {
                         document.getElementById('entryForm').reset();
                         document.getElementById('entryUnitId').value = uId;
+                        document.getElementById('editingEntryId').value = '';
+                        setType('aluguel');
                         document.getElementById('entryModal').style.display = 'flex';
                     }
+                    if(action === 'edit-entry') {
+                        const e = state.entries.find(x => x.id === id);
+                        const f = document.getElementById('entryForm');
+                        f.reset();
+                        document.getElementById('editingEntryId').value = id;
+                        document.getElementById('entryUnitId').value = uId;
+                        setType(e.entryType);
+                        Object.keys(e).forEach(k => {
+                            if(f[k] && f[k].type !== 'radio') f[k].value = e[k];
+                            if(f[k] && f[k].type === 'radio') {
+                                f.querySelectorAll(`[name="${k}"]`).forEach(r => { if(r.value === e[k]) r.checked = true; });
+                            }
+                        });
+                        document.getElementById('entryModal').style.display = 'flex';
+                    }
+                    if(action === 'delete-entry' && confirm("Remover este registro?")) remove(ref(db, `gestao_patrimonial/entries/${id}`));
                     if(action === 'edit-unit') {
                         const u = state.units.find(x => x.id === uId);
+                        const f = document.getElementById('unitForm');
+                        f.reset();
                         document.getElementById('unitId').value = uId;
-                        document.querySelector('[name="name"]').value = u.name;
-                        document.querySelector('[name="tenant"]').value = u.tenant;
+                        Object.keys(u).forEach(k => { if(f[k]) f[k].value = u[k]; });
                         document.getElementById('btnDeleteUnit').classList.remove('hidden');
                         document.getElementById('unitModal').style.display = 'flex';
                     }
-                    if(action === 'delete-entry' && confirm("Remover?")) remove(ref(db, `gestao_patrimonial/entries/${id}`));
                 };
             });
         }
 
-        // ENTRY TYPE LOGIC
         const setType = (t) => {
             document.getElementById('entryType').value = t;
             document.getElementById('optAluguel').className = `type-option ${t==='aluguel'?'active':''}`;
@@ -384,10 +428,12 @@
         };
         document.getElementById('optAluguel').onclick = () => setType('aluguel');
         document.getElementById('optDespesa').onclick = () => setType('despesa');
-        document.getElementById('rentInput').oninput = (e) => document.getElementById('inputTotalValue').value = e.target.value;
+        document.getElementById('rentInput').oninput = (e) => { if(document.getElementById('entryType').value === 'aluguel') document.getElementById('inputTotalValue').value = e.target.value; };
         document.querySelectorAll('.calc-trigger').forEach(el => el.oninput = () => {
-            const f = document.getElementById('entryForm');
-            document.getElementById('inputTotalValue').value = (parseFloat(f.energyValue.value||0) + parseFloat(f.waterFee.value||0) + parseFloat(f.otherVal.value||0)).toFixed(2);
+            if(document.getElementById('entryType').value === 'despesa') {
+                const f = document.getElementById('entryForm');
+                document.getElementById('inputTotalValue').value = (parseFloat(f.energyValue.value||0) + parseFloat(f.waterFee.value||0) + parseFloat(f.otherVal.value||0)).toFixed(2);
+            }
         });
     </script>
 </body>
