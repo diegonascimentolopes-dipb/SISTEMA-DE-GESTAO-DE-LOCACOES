@@ -439,48 +439,63 @@
             attachEvents();
         }
 
-        function attachEvents() {
-            document.querySelectorAll('[data-action]').forEach(btn => {
-                btn.onclick = () => {
-                    const action = btn.getAttribute('data-action');
-                    const uId = btn.getAttribute('data-unit');
-                    const id = btn.getAttribute('data-id');
+// 1. ATUALIZE A FUNÇÃO DE CLIQUE
+function attachEvents() {
+    document.querySelectorAll('[data-action]').forEach(btn => {
+        btn.onclick = () => {
+            const action = btn.getAttribute('data-action');
+            const uId = btn.getAttribute('data-unit');
+            const id = btn.getAttribute('data-id');
 
-                    if(action === 'new-entry') {
-                        document.getElementById('entryForm').reset();
-                        document.getElementById('entryUnitId').value = uId;
-                        document.getElementById('editingEntryId').value = '';
-                        setType('aluguel');
-                        document.getElementById('entryModal').style.display = 'flex';
-                    }
-                    if(action === 'edit-entry') {
-                        const e = state.entries.find(x => x.id === id);
-                        const f = document.getElementById('entryForm');
-                        f.reset();
-                        document.getElementById('editingEntryId').value = id;
-                        document.getElementById('entryUnitId').value = uId;
-                        setType(e.entryType);
-                        Object.keys(e).forEach(k => {
-                            if(f[k] && f[k].type !== 'radio') f[k].value = e[k];
-                            if(f[k] && f[k].type === 'radio') {
-                                f.querySelectorAll(`[name="${k}"]`).forEach(r => { if(r.value === e[k]) r.checked = true; });
-                            }
+            if(action === 'edit-entry') {
+                // Busca o lançamento exato no estado atual
+                const e = state.entries.find(x => x.id === id);
+                const f = document.getElementById('entryForm');
+                
+                f.reset();
+                document.getElementById('editingEntryId').value = id; // IMPORTANTE: Guarda o ID para o Firebase saber qual editar
+                document.getElementById('entryUnitId').value = uId;
+                
+                setType(e.entryType); // Ajusta se é Aluguel ou Despesa
+                
+                // Preenche todos os campos automaticamente
+                Object.keys(e).forEach(k => {
+                    if(f[k] && f[k].type !== 'radio') f[k].value = e[k];
+                    if(f[k] && f[k].type === 'radio') {
+                        f.querySelectorAll(`[name="${k}"]`).forEach(r => { 
+                            if(r.value === e[k]) r.checked = true; 
                         });
-                        document.getElementById('entryModal').style.display = 'flex';
                     }
-                    if(action === 'delete-entry' && confirm("Remover este registro?")) remove(ref(db, `gestao_patrimonial/entries/${id}`));
-                    if(action === 'edit-unit') {
-                        const u = state.units.find(x => x.id === uId);
-                        const f = document.getElementById('unitForm');
-                        f.reset();
-                        document.getElementById('unitId').value = uId;
-                        Object.keys(u).forEach(k => { if(f[k]) f[k].value = u[k]; });
-                        document.getElementById('btnDeleteUnit').classList.remove('hidden');
-                        document.getElementById('unitModal').style.display = 'flex';
-                    }
-                };
-            });
-        }
+                });
+                document.getElementById('entryModal').style.display = 'flex';
+            }
+            // ... manter as outras ações (new-entry, delete-entry, edit-unit)
+        };
+    });
+}
+
+// 2. GARANTA QUE O BOTÃO DE SALVAR USE O ID
+document.getElementById('entryForm').onsubmit = (e) => {
+    e.preventDefault();
+    const d = Object.fromEntries(new FormData(e.target));
+    const edId = document.getElementById('editingEntryId').value;
+    const uId = document.getElementById('entryUnitId').value;
+    
+    const data = { 
+        ...d, 
+        totalValue: parseFloat(d.totalValue || 0), 
+        unitId: uId 
+    };
+
+    if (edId) {
+        // Se tem ID, ele ATUALIZA o registro existente na nuvem
+        update(ref(db, `gestao_patrimonial/entries/${edId}`), data);
+    } else {
+        // Se não tem ID, ele CRIA um novo
+        push(ref(db, 'gestao_patrimonial/entries'), data);
+    }
+    closeModal('entryModal');
+};
 
         const setType = (t) => {
             document.getElementById('entryType').value = t;
